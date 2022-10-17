@@ -65,7 +65,7 @@ class Usuario():
         
                 textoMensagens =  str(mensagem.get("1.0",END))
                 self.enviar(textoMensagens)
-                textoMensagens = "\n VOCÊ: \n" + textoMensagens
+                textoMensagens = "\n VOCÊ: \n  " + textoMensagens
                 self.escrever(textoMensagens)
                 mensagem.delete("1.0",END)
         def usuarioA():
