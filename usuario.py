@@ -6,12 +6,14 @@ from tkinter import *
 class Usuario():
     
     def __init__(self,hostA,hostB,portaUsuarioA,portaUsuarioB):
-        self.hostA = hostA
-        self.hostB = hostB
-        self.portaUsuarioA = portaUsuarioA
-        self.portaUsuarioB = portaUsuarioB
-        self.mutex = threading.Lock()
-        threading.Thread( target = self.Listing).start()
+        
+        self.hostA = (hostA,portaUsuarioA)
+        self.hostB = (hostB,portaUsuarioB)
+        self.host = []
+        self.host.append(self.hostA) 
+        self.host.append(self.hostB)
+        
+        self.mutexMensagem = threading.Lock()
         threading.Thread( target = self.janela).start()
 
     def Receber(self,cliente, endereco):
@@ -26,8 +28,7 @@ class Usuario():
     def Listing(self):
 
         s = socket(AF_INET, SOCK_STREAM)
-
-        s.bind((self.hostA, self.portaUsuarioA))
+        s.bind(self.host[0])
         s.listen(10)
 
         while True:
@@ -38,21 +39,21 @@ class Usuario():
     def enviar(self, mensagem):
         s = socket(AF_INET, SOCK_STREAM)
     
-        s.connect((self.hostB, self.portaUsuarioB))  
+        s.connect(self.host[1])  
         s.send(mensagem.encode()) 
         s.close()
 
     def escrever(self, mensagem):
-        self.mutex.acquire()
+        self.mutexMensagem.acquire()
         self.mensagens.insert(END, mensagem)
         self.scrollbar.config(command=self.mensagens.yview)
         self.mensagens.pack()
-        self.mutex.release()
+        self.mutexMensagem.release()
 
 
 
     def janela(self):
-
+        self.iniciado = False
         app=Tk()
         app.title("MSN")
         app.geometry("500x310")
@@ -67,7 +68,42 @@ class Usuario():
                 textoMensagens = "\n VOCÊ: \n" + textoMensagens
                 self.escrever(textoMensagens)
                 mensagem.delete("1.0",END)
+        def usuarioA():
+            if self.iniciado == False :
+                self.host.clear()
+                self.host.append(self.hostA) 
+                self.host.append(self.hostB)
+                threading.Thread( target = self.Listing).start()
+                self.iniciado = True
+                self.escrever("\n Aplicativo iniciado A!!\n")
+
+            else:
+                self.escrever("\n AVISO!! \n Aplicativo já iniciado, para mudar feche e abre novamente!")
+            
+            
+        def usuarioB():
+            if self.iniciado == False :
+                self.host.clear()
+                self.host.append(self.hostB) 
+                self.host.append(self.hostA)
+                threading.Thread( target = self.Listing).start()
+                self.iniciado = True
+                self.escrever("\n Aplicativo iniciado A!!\n")
+            else:
+                self.escrever("\n AVISO!! \n Aplicativo já iniciado, para mudar feche e abre novamente!")
         
+        def fechar():
+            app.destroy()
+
+
+        menubar = Menu(app)
+        filemenu = Menu(menubar)
+        app.config(menu=menubar)
+        menubar.add_cascade(label='Usuarios', menu=filemenu)
+        filemenu.add_command(label='Usuario A', command=usuarioA)
+        filemenu.add_command(label='Usuario B', command=usuarioB)
+        menubar.add_command(label='Fechar', command=fechar)
+
         frameHistorico = Frame(app)
         frameHistorico.place(x=10,y=10,width=480,height=180)
 
