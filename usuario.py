@@ -61,13 +61,15 @@ class Usuario():
 
         def buttonEnviar():
             
-            if len(mensagem.get("1.0",END))>1 :
-        
-                textoMensagens =  str(mensagem.get("1.0",END))
-                self.enviar(textoMensagens)
-                textoMensagens = "\n VOCÊ: \n  " + textoMensagens
-                self.escrever(textoMensagens)
-                mensagem.delete("1.0",END)
+            if len(mensagem.get("1.0",END))>1:
+                if self.iniciado:
+                    textoMensagens =  str(mensagem.get("1.0",END))
+                    self.enviar(textoMensagens)
+                    textoMensagens = "\n VOCÊ: \n  " + textoMensagens
+                    self.escrever(textoMensagens)
+                    mensagem.delete("1.0",END)
+                else:
+                    self.escrever("\n Aplicativo não iniciado!! \n  Selecione um Usuario.")
         def usuarioA():
             if self.iniciado == False :
                 self.host.clear()
@@ -75,6 +77,7 @@ class Usuario():
                 self.host.append(self.hostB)
                 threading.Thread( target = self.Listing).start()
                 self.iniciado = True
+                app.title("MSN - Usuario A")
                 self.escrever("\n Aplicativo iniciado como usuario A!!\n")
 
             else:
@@ -88,6 +91,7 @@ class Usuario():
                 self.host.append(self.hostA)
                 threading.Thread( target = self.Listing).start()
                 self.iniciado = True
+                app.title("MSN - Usuario B")
                 self.escrever("\n Aplicativo iniciado como usuario B!!\n")
             else:
                 self.escrever("\n AVISO!! \n Aplicativo já iniciado, para mudar feche e abre novamente!")
