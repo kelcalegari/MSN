@@ -75,7 +75,7 @@ class Usuario():
                 self.host.append(self.hostB)
                 threading.Thread( target = self.Listing).start()
                 self.iniciado = True
-                self.escrever("\n Aplicativo iniciado A!!\n")
+                self.escrever("\n Aplicativo iniciado como usuario A!!\n")
 
             else:
                 self.escrever("\n AVISO!! \n Aplicativo já iniciado, para mudar feche e abre novamente!")
@@ -88,7 +88,7 @@ class Usuario():
                 self.host.append(self.hostA)
                 threading.Thread( target = self.Listing).start()
                 self.iniciado = True
-                self.escrever("\n Aplicativo iniciado A!!\n")
+                self.escrever("\n Aplicativo iniciado como usuario B!!\n")
             else:
                 self.escrever("\n AVISO!! \n Aplicativo já iniciado, para mudar feche e abre novamente!")
         
