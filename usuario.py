@@ -8,17 +8,25 @@ class Usuario():
 
     def __init__(self, hostA, hostB, portaUsuarioA, portaUsuarioB):
 
+
         self.hostA = (hostA, portaUsuarioA)
         self.hostB = (hostB, portaUsuarioB)
         self.host = []
         self.host.append(self.hostA)
         self.host.append(self.hostB)
 
+        # Criando um thread para executar a GUI.
         self.mutexMensagem = threading.Lock()
         threading.Thread(target=self.janela).start()
         
 
     def Receber(self, cliente, endereco):
+        """
+        Ele recebe uma mensagem de um cliente, decodifica, fecha a conexão e escreve a mensagem para
+        a GUI.
+        :param cliente: O socket do cliente
+        :param endereco: O endereço IP e o número da porta do cliente
+        """
         global mutex, historicoTemp
         mensagem = cliente.recv(8192)
         mensagem = mensagem.decode()
@@ -29,6 +37,8 @@ class Usuario():
 
     def Listing(self):
 
+        # Uma função que recebe uma mensagem de um cliente, a decodifica, fecha a conexão e
+        # grava a mensagem na GUI.
         try:
             s = socket(AF_INET, SOCK_STREAM)
             s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
@@ -46,6 +56,8 @@ class Usuario():
 
     def enviar(self, mensagem):
         try:
+            # Criando um socket, configurando a opção socket para reutilizar o endereço, conectando ao
+            # outro usuário, enviando a mensagem e fechando o soquete.
             s = socket(AF_INET, SOCK_STREAM)
             s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
             s.connect(self.host[1])
@@ -55,7 +67,10 @@ class Usuario():
             messagebox.showerror("Erro", "Erro ao enviar. ERRO: " + str(erro))
 
     def escrever(self, mensagem):
+        # Bloqueando a GUI para que apenas um thread possa gravar nela por vez.
         self.mutexMensagem.acquire()
+        # Inserindo a mensagem no widget de texto, configurando a barra de rolagem e reempacotando
+        # o widget de texto.
         self.mensagens.insert(END, mensagem)
         self.scrollbar.config(command=self.mensagens.yview)
         self.mensagens.pack()
@@ -63,12 +78,17 @@ class Usuario():
 
     def limparTela(self):
         self.mutexMensagem.acquire()
+        # Excluindo o texto do widget de texto e reempacotando-o.
         self.mensagens.delete("1.0", END)
         self.scrollbar.config(command=self.mensagens.yview)
         self.mensagens.pack()
         self.mutexMensagem.release()
 
     def janela(self):
+        """
+        Ele cria uma janela GUI com um widget de texto para as mensagens, um widget de texto para a mensagem a ser
+        enviado e um botão para enviar a mensagem
+        """
         self.iniciado = False
         app = Tk()
         app.title("MSN")
@@ -81,6 +101,8 @@ class Usuario():
                 if self.iniciado:
                     textoMensagens = str(mensagem.get("1.0", END))
                     try:
+                        # Enviando a mensagem para o outro usuário, gravando a mensagem na GUI e
+                        # em seguida, excluindo a mensagem do widget de texto.
                         self.enviar(textoMensagens)
                         textoMensagens = "\n VOCÊ: \n  " + textoMensagens
                         self.escrever(textoMensagens)
@@ -94,6 +116,13 @@ class Usuario():
                     
 
         def usuarioA():
+            """
+            Função que é chamada quando o usuário clica no item de menu "Usuario A". Ele verifica
+            para ver se o aplicativo já foi iniciado. Se não tiver, ele limpa o host
+            list, ordena na ordem hostA e hostB à lista, inicia o thread de listagem, define o
+            iniciada variável para True, define o título da janela GUI para "MSN - Usuario A", e
+            grava uma mensagem na GUI.
+            """
             if self.iniciado == False:
                 self.host.clear()
                 self.host.append(self.hostA)
@@ -107,6 +136,13 @@ class Usuario():
                 messagebox.showwarning("Aviso", "Aplicativo já iniciado, para mudar o usuario feche e abre novamente!" )
 
         def usuarioB():
+            """
+            Função que é chamada quando o usuário clica no item de menu "Usuario B". Ele verifica
+            para ver se o aplicativo já foi iniciado. Se não tiver, ele limpa o host
+            list, ordena na ordem hostB e hostA à lista, inicia o thread de listagem, define o
+            iniciada variável para True, define o título da janela GUI para "MSN - Usuario B", e
+            grava uma mensagem na GUI.
+            """
             if self.iniciado == False:
                 self.host.clear()
                 self.host.append(self.hostB)
@@ -123,6 +159,9 @@ class Usuario():
         def fechar():
             app.destroy()
 
+        # Criando uma barra de menus com dois menus, um chamado "Usuarios" e outro chamado "Opções". o
+        # O menu "Usuarios" tem dois itens de menu, "Usuario A" e "Usuario B". O menu "Opções" possui dois
+        # itens do menu, "Limpar tela" e "Fechar".
         menubar = Menu(app)
         usuarioMenu = Menu(menubar)
         opcoesMenu = Menu(menubar)
@@ -134,6 +173,8 @@ class Usuario():
         opcoesMenu.add_command(label='Limpar tela', command=self.limparTela)
         opcoesMenu.add_command(label='Fechar', command=fechar)
 
+        # Criando uma janela GUI com um widget de texto para as mensagens, um widget de texto para a mensagem
+        # ser enviado, e um botão para enviar a mensagem.
         frameHistorico = Frame(app)
         frameHistorico.place(x=10, y=10, width=480, height=180)
 
@@ -156,6 +197,7 @@ class Usuario():
         app.mainloop()
 
 
+# Criando um objeto de usuário.
 hostA = "localhost"
 hostB = "localhost"
 portaUsuarioA = 3535
