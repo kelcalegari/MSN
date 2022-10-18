@@ -3,6 +3,7 @@ import threading
 from time import sleep
 from tkinter import *
 from tkinter import messagebox
+import sys
 
 class Usuario():
 
@@ -14,7 +15,8 @@ class Usuario():
         self.host = []
         self.host.append(self.hostA)
         self.host.append(self.hostB)
-
+        self.portaEnviar = 0
+        
         # Criando um thread para executar a GUI.
         self.mutexMensagem = threading.Lock()
         threading.Thread(target=self.janela).start()
@@ -30,6 +32,7 @@ class Usuario():
         global mutex, historicoTemp
         mensagem = cliente.recv(8192)
         mensagem = mensagem.decode()
+        
         cliente.close()
         mensagem = "\n IP: {}:{} \n  {}".format(
             endereco[0], endereco[1], mensagem)
@@ -47,6 +50,7 @@ class Usuario():
 
             while True:
                 cliente, endereco = s.accept()
+                
                 threading.Thread(target=self.Receber,
                                 args=(cliente, endereco)).start()
         except Exception as erro:
@@ -55,15 +59,32 @@ class Usuario():
             self.iniciado = False
 
     def enviar(self, mensagem):
+        
+        while True:
+                
+            try:
+                # Binding the socket to the host and port of the user.
+                enviarSocket = socket(AF_INET, SOCK_STREAM)
+                enviarSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+                enviarSocket.bind((self.host[0][0], self.portaEnviar))
+                print(self.host[0][0], self.portaEnviar)
+                break
+            except OSError:
+                self.portaEnviar +=1
+                print("Erro", self.portaEnviar)
+    
         try:
             # Criando um socket, configurando a opção socket para reutilizar o endereço, conectando ao
             # outro usuário, enviando a mensagem e fechando o soquete.
-            s = socket(AF_INET, SOCK_STREAM)
-            s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-            s.connect(self.host[1])
-            s.send(mensagem.encode())
-            s.close()
+            
+            enviarSocket.connect(self.host[1])
+            enviarSocket.send(mensagem.encode())
+            enviarSocket.close()
+            
+            
+        
         except Exception as erro:
+            
             messagebox.showerror("Erro", "Erro ao enviar. ERRO: " + str(erro))
 
     def escrever(self, mensagem):
@@ -130,6 +151,8 @@ class Usuario():
                 threading.Thread(target=self.Listing).start()
                 self.iniciado = True
                 app.title("MSN - Usuario A")
+                self.portaEnviar = self.host[0][1] + 1
+
                 self.escrever("\n Aplicativo iniciado como usuario A!!\n")
 
             else:
@@ -150,6 +173,8 @@ class Usuario():
                 threading.Thread(target=self.Listing).start()
                 self.iniciado = True
                 app.title("MSN - Usuario B")
+                self.portaEnviar = self.host[0][1] + 1
+                        
                 self.escrever("\n Aplicativo iniciado como usuario B!!\n")
             else:
                 messagebox.showwarning("Aviso", "Aplicativo já iniciado, para mudar o usuario feche e abre novamente!" )
@@ -158,6 +183,7 @@ class Usuario():
 
         def fechar():
             app.destroy()
+            sys.exit()
 
         # Criando uma barra de menus com dois menus, um chamado "Usuarios" e outro chamado "Opções". o
         # O menu "Usuarios" tem dois itens de menu, "Usuario A" e "Usuario B". O menu "Opções" possui dois
@@ -200,8 +226,8 @@ class Usuario():
 # Criando um objeto de usuário
 hostA = "localhost"
 hostB = "localhost"
-portaUsuarioA = 3535
-portaUsuarioB = 5353
+portaUsuarioA = 50000
+portaUsuarioB = 40000
 
 Usuario(hostA, hostB, portaUsuarioA, portaUsuarioB)
 
