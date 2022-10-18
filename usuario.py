@@ -197,10 +197,11 @@ class Usuario():
         app.mainloop()
 
 
-# Criando um objeto de usuário.
+# Criando um objeto de usuário
 hostA = "localhost"
 hostB = "localhost"
 portaUsuarioA = 3535
 portaUsuarioB = 5353
 
 Usuario(hostA, hostB, portaUsuarioA, portaUsuarioB)
+
