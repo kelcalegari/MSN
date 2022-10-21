@@ -1,44 +1,80 @@
 from socket import *
 import threading
-from time import sleep
 from tkinter import *
 from tkinter import messagebox
+from tkinter import simpledialog
+import datetime
+
 
 class Usuario():
 
     def __init__(self, hostA, hostB, portaUsuarioA, portaUsuarioB):
-
+        """
+        It creates a thread to run the GUI.
+        
+        :param hostA: The IP address of the first user
+        :param hostB: The IP address of the other user
+        :param portaUsuarioA: The port that the user will use to receive the message
+        :param portaUsuarioB: The port that the user will use to send to another user
+        """
 
         self.hostA = (hostA, portaUsuarioA)
         self.hostB = (hostB, portaUsuarioB)
         self.host = []
-        self.host.append(self.hostA)
-        self.host.append(self.hostB)
-
+        self.nomeUsuario = ""
+        self.historicoMensagem = []
         # Criando um thread para executar a GUI.
         self.mutexMensagem = threading.Lock()
         threading.Thread(target=self.janela).start()
+
+    def ack(self, mensagem):
+        """
+        It sends a message to the server, and then waits for an ack message from the server
         
+        :param mensagem: The message to be sent
+        """
+        self.enviar(self.codificarMensagem("ack", mensagem))
+
+    def decodeMensagem(self, mensagem):
+        """
+        It receives a message, decodes it, splits it into a list and returns the list.
+        
+        :param mensagem: the message that was sent
+        :return: the message, the sender, the receiver and the message type.
+        """
+        sep = "|"
+        mensagem = mensagem.decode()
+        vetormensagem = mensagem.split(sep)
+        return vetormensagem[0], vetormensagem[1], vetormensagem[2], vetormensagem[3]
 
     def Receber(self, cliente, endereco):
         """
-        Ele recebe uma mensagem de um cliente, decodifica, fecha a conexão e escreve a mensagem para
-        a GUI.
-        :param cliente: O socket do cliente
-        :param endereco: O endereço IP e o número da porta do cliente
+        It receives a message from a client, checks if it's an ack, and if it's not, it sends an ack and
+        prints the message.
+        
+        :param cliente: The client socket
+        :param endereco: The address of the client
         """
-        global mutex, historicoTemp
-        mensagem = cliente.recv(8192)
-        mensagem = mensagem.decode()
+
+        tipo, nomeOrigem, tempo, mensagem = self.decodeMensagem(
+            cliente.recv(1024))
+
         cliente.close()
-        mensagem = "\n IP: {}:{} \n  {}".format(
-            endereco[0], endereco[1], mensagem)
-        self.escrever(mensagem)
+        if tipo == "ack" and (mensagem in self.historicoMensagem):
+            self.escrever(" «", 1)
+            self.historicoMensagem.remove(mensagem)
+
+        else:
+            self.ack(mensagem)
+            mensagem = "\n {} {}: \n  {}".format(
+                tempo, nomeOrigem, mensagem)
+            self.escrever(mensagem)
 
     def Listing(self):
+        """
+        It creates a socket, binds it to the host, and then listens for connections.
+        """
 
-        # Uma função que recebe uma mensagem de um cliente, a decodifica, fecha a conexão e
-        # grava a mensagem na GUI.
         try:
             s = socket(AF_INET, SOCK_STREAM)
             s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
@@ -48,37 +84,72 @@ class Usuario():
             while True:
                 cliente, endereco = s.accept()
                 threading.Thread(target=self.Receber,
-                                args=(cliente, endereco)).start()
+                                 args=(cliente, endereco)).start()
         except Exception as erro:
-            messagebox.showerror("Erro", "Selecione o usuario novamente. ERRO: " + str(erro))
+            messagebox.showerror(
+                "Erro", "Selecione o usuario novamente. ERRO: " + str(erro))
             self.limparTela()
             self.iniciado = False
 
+    def getTimeNow(self):
+        """
+        It returns the current time in the format of HH:MM:SS
+        :return: The time in the format of HH:MM:SS
+        """
+        tempo = datetime.datetime.now()
+        tempo = str(tempo.hour) + ":" + str(tempo.minute) + \
+            ":" + str(tempo.second)
+        return tempo
+
+    def codificarMensagem(self, tipo, mensagem):
+        """
+        It takes a message and encodes it with a type, username, and timestamp.
+        
+        :param tipo: type of message
+        :param mensagem: the message to be sent
+        :return: The message is being encoded.
+        """
+        sep = "|"
+        mensagem = tipo + sep + self.nomeUsuario + \
+            sep + self.getTimeNow() + sep + mensagem
+        return mensagem.encode()
+
     def enviar(self, mensagem):
+        """
+        It creates a socket, connects to the server, sends the message and closes the socket
+        
+        :param mensagem: The message to be sent
+        """
         try:
-            # Criando um socket, configurando a opção socket para reutilizar o endereço, conectando ao
-            # outro usuário, enviando a mensagem e fechando o soquete.
             s = socket(AF_INET, SOCK_STREAM)
             s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
             s.connect(self.host[1])
-            s.send(mensagem.encode())
+            s.send(mensagem)
             s.close()
         except Exception as erro:
             messagebox.showerror("Erro", "Erro ao enviar. ERRO: " + str(erro))
 
-    def escrever(self, mensagem):
-        # Bloqueando a GUI para que apenas um thread possa gravar nela por vez.
+    def escrever(self, mensagem, posicao=0):
+        """
+        It inserts a message into a textbox
+        
+        :param mensagem: The message to be written
+        :param posicao: 0 = append to the end of the textbox, 1 = insert before the last line, defaults
+        to 0 (optional)
+        """
+        
         self.mutexMensagem.acquire()
-        # Inserindo a mensagem no widget de texto, configurando a barra de rolagem e reempacotando
-        # o widget de texto.
-        self.mensagens.insert(END, mensagem)
+        if posicao == 0:
+            self.mensagens.insert(END, mensagem)
+        else:
+            self.mensagens.insert("end-2line lineend", mensagem)
         self.scrollbar.config(command=self.mensagens.yview)
         self.mensagens.pack()
         self.mutexMensagem.release()
 
     def limparTela(self):
-        self.mutexMensagem.acquire()
         # Excluindo o texto do widget de texto e reempacotando-o.
+        self.mutexMensagem.acquire()
         self.mensagens.delete("1.0", END)
         self.scrollbar.config(command=self.mensagens.yview)
         self.mensagens.pack()
@@ -98,63 +169,70 @@ class Usuario():
         def buttonEnviar():
 
             if len(mensagem.get("1.0", END)) > 1:
-                if self.iniciado:
-                    textoMensagens = str(mensagem.get("1.0", END))
-                    try:
-                        # Enviando a mensagem para o outro usuário, gravando a mensagem na GUI e
-                        # em seguida, excluindo a mensagem do widget de texto.
-                        self.enviar(textoMensagens)
-                        textoMensagens = "\n VOCÊ: \n  " + textoMensagens
-                        self.escrever(textoMensagens)
-                        mensagem.delete("1.0", END)
-                    except Exception as erro:
-                        messagebox.showerror("Erro enviar mensagem", "Mensagem não enviada. ERRO: " + str(erro))
-                    
-                    
+                if len(mensagem.get("1.0", END)) < 901:
+                    if self.iniciado:
+                        textoMensagens = str(mensagem.get("1.0", END))
+                        try:
+                            # Enviando a mensagem para o outro usuário, gravando a mensagem na GUI e
+                            # em seguida, excluindo a mensagem do widget de texto.
+                            self.enviar(self.codificarMensagem(
+                                "post", textoMensagens))
+                            self.historicoMensagem.append(textoMensagens)
+                            textoMensagens = "\n " + self.getTimeNow() + " Você: \n  " + textoMensagens
+                            self.escrever(textoMensagens)
+                            mensagem.delete("1.0", END)
+                        except Exception as erro:
+                            messagebox.showerror(
+                                "Erro enviar mensagem", "Mensagem não enviada. ERRO: " + str(erro))
+
+                    else:
+                        messagebox.showwarning(
+                            "Aplicativo não iniciado!!", "Aplicativo não iniciado!! Selecione um Usuario. ")
                 else:
-                    messagebox.showwarning("Aplicativo não iniciado!!", "Aplicativo não iniciado!! Selecione um Usuario. " )
-                    
+                    messagebox.showwarning(
+                        "Aviso!!", "Tamanho maximo atingido, max de 900 caracteres")
+                    print(len(mensagem.get("1.0", END)))
 
         def usuarioA():
             """
-            Função que é chamada quando o usuário clica no item de menu "Usuario A". Ele verifica
-            para ver se o aplicativo já foi iniciado. Se não tiver, ele limpa o host
-            list, ordena na ordem hostA e hostB à lista, inicia o thread de listagem, define o
-            iniciada variável para True, define o título da janela GUI para "MSN - Usuario A", e
-            grava uma mensagem na GUI.
+            If the application is not started, ask the user for his name, start the application, start
+            the thread, set the application title, and write a welcome message.
+            If the application is started, show a warning message.
             """
             if self.iniciado == False:
+                self.nomeUsuario = simpledialog.askstring(
+                    title="Nome", prompt="Informe o seu nome:")
                 self.host.clear()
                 self.host.append(self.hostA)
                 self.host.append(self.hostB)
                 threading.Thread(target=self.Listing).start()
                 self.iniciado = True
-                app.title("MSN - Usuario A")
-                self.escrever("\n Aplicativo iniciado como usuario A!!\n")
-
+                app.title("MSN - {}".format(self.nomeUsuario))
+                self.escrever(
+                    "\n Bem vindo {}, você iniciou como A!!\n".format(self.nomeUsuario))
             else:
-                messagebox.showwarning("Aviso", "Aplicativo já iniciado, para mudar o usuario feche e abre novamente!" )
+                messagebox.showwarning(
+                    "Aviso", "Aplicativo já iniciado, para mudar o usuario feche e abre novamente!")
 
         def usuarioB():
             """
-            Função que é chamada quando o usuário clica no item de menu "Usuario B". Ele verifica
-            para ver se o aplicativo já foi iniciado. Se não tiver, ele limpa o host
-            list, ordena na ordem hostB e hostA à lista, inicia o thread de listagem, define o
-            iniciada variável para True, define o título da janela GUI para "MSN - Usuario B", e
-            grava uma mensagem na GUI.
+            If the application is not started, ask the user for his name, start the application, and set
+            the application title.
             """
             if self.iniciado == False:
+                self.nomeUsuario = simpledialog.askstring(
+                    title="Nome", prompt="Informe o seu nome:")
                 self.host.clear()
                 self.host.append(self.hostB)
                 self.host.append(self.hostA)
                 threading.Thread(target=self.Listing).start()
                 self.iniciado = True
-                app.title("MSN - Usuario B")
-                self.escrever("\n Aplicativo iniciado como usuario B!!\n")
+                app.title("MSN - {}".format(self.nomeUsuario))
+                self.escrever(
+                    "\n Bem vindo {}, você iniciou como B!!\n".format(self.nomeUsuario))
             else:
-                messagebox.showwarning("Aviso", "Aplicativo já iniciado, para mudar o usuario feche e abre novamente!" )
-
-        
+                messagebox.showwarning(
+                    "Aviso", "Aplicativo já iniciado, para mudar o usuario feche e abre novamente!")
 
         def fechar():
             app.destroy()
@@ -187,8 +265,8 @@ class Usuario():
 
         self.mensagens['yscrollcommand'] = self.scrollbar.set
 
-        Label(app, text="Informe a mensagem: ", background="#dde",
-              foreground="#000", anchor="s").place(x=10, y=200, width=130, height=20)
+        Label(app, text="Informe a mensagem: (max: 900 char) ", background="#dde",
+              foreground="#000", anchor="s").place(x=10, y=200, width=210, height=20)
         mensagem = Text(app)
         mensagem.place(x=10, y=220, width=425, height=80)
 
@@ -204,4 +282,3 @@ portaUsuarioA = 3535
 portaUsuarioB = 5353
 
 Usuario(hostA, hostB, portaUsuarioA, portaUsuarioB)
-
