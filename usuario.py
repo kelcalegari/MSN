@@ -63,8 +63,8 @@ class Usuario():
         if tipo == "ack" and (mensagem in self.historicoMensagem):
             self.escrever(" «", 1)
             self.historicoMensagem.remove(mensagem)
-
-        else:
+        
+        elif tipo == "post":
             self.ack(mensagem)
             mensagem = "\n {} {}: \n  {}".format(
                 tempo, nomeOrigem, mensagem)
@@ -122,7 +122,6 @@ class Usuario():
         """
         try:
             s = socket(AF_INET, SOCK_STREAM)
-            s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
             s.connect(self.host[1])
             s.send(mensagem)
             s.close()
