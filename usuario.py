@@ -10,12 +10,12 @@ class Usuario():
 
     def __init__(self, hostA, hostB, portaUsuarioA, portaUsuarioB):
         """
-        It creates a thread to run the GUI.
+        Ele cria um thread para executar a GUI.
         
-        :param hostA: The IP address of the first user
-        :param hostB: The IP address of the other user
-        :param portaUsuarioA: The port that the user will use to receive the message
-        :param portaUsuarioB: The port that the user will use to send to another user
+        :param hostA: O endereço IP do primeiro usuário
+        :param hostB: O endereço IP do outro usuário
+        :param portaUsuarioA: A porta que o usuário usará para receber a mensagem
+        :param portaUsuarioB: A porta que o usuário usará para enviar para outro usuário
         """
 
         self.hostA = (hostA, portaUsuarioA)
@@ -29,18 +29,18 @@ class Usuario():
 
     def ack(self, mensagem):
         """
-        It sends a message to the server, and then waits for an ack message from the server
+        Ele envia uma mensagem para o servidor e aguarda uma mensagem de confirmação do servidor
         
-        :param mensagem: The message to be sent
+        :param mensagem: A mensagem a ser enviada
         """
         self.enviar(self.codificarMensagem("ack", mensagem))
 
     def decodeMensagem(self, mensagem):
         """
-        It receives a message, decodes it, splits it into a list and returns the list.
+        Ele recebe uma mensagem, decodifica-a, divide-a em uma lista e retorna a lista.
         
-        :param mensagem: the message that was sent
-        :return: the message, the sender, the receiver and the message type.
+        :param mensagem: a mensagem que foi enviada
+        :return: a mensagem, o remetente, o destinatário e o tipo de mensagem.
         """
         sep = "|"
         mensagem = mensagem.decode()
@@ -49,11 +49,11 @@ class Usuario():
 
     def Receber(self, cliente, endereco):
         """
-        It receives a message from a client, checks if it's an ack, and if it's not, it sends an ack and
-        prints the message.
+        Ele recebe uma mensagem de um cliente, verifica se é um ack, e se não for, ele envia um ack e
+        imprime a mensagem.
         
-        :param cliente: The client socket
-        :param endereco: The address of the client
+        :param cliente: O socket do cliente
+        :param endereco: O endereço do cliente
         """
 
         tipo, nomeOrigem, tempo, mensagem = self.decodeMensagem(
@@ -72,7 +72,7 @@ class Usuario():
 
     def Listing(self):
         """
-        It creates a socket, binds it to the host, and then listens for connections.
+        Ele cria um soquete, liga-o ao host e, em seguida, escuta as conexões.
         """
 
         try:
@@ -93,8 +93,8 @@ class Usuario():
 
     def getTimeNow(self):
         """
-        It returns the current time in the format of HH:MM:SS
-        :return: The time in the format of HH:MM:SS
+        Retorna a hora atual no formato HH:MM:SS
+        :return: A hora no formato HH:MM:SS
         """
         tempo = datetime.datetime.now()
         tempo = str(tempo.hour) + ":" + str(tempo.minute) + \
@@ -103,11 +103,11 @@ class Usuario():
 
     def codificarMensagem(self, tipo, mensagem):
         """
-        It takes a message and encodes it with a type, username, and timestamp.
+        Ele pega uma mensagem e a codifica com um tipo, nome de usuário e carimbo de data/hora.
         
-        :param tipo: type of message
-        :param mensagem: the message to be sent
-        :return: The message is being encoded.
+        :param tipo: tipo de mensagem
+        :param mensagem: a mensagem a ser enviada
+        :return: A mensagem está sendo codificada.
         """
         sep = "|"
         mensagem = tipo + sep + self.nomeUsuario + \
@@ -116,9 +116,9 @@ class Usuario():
 
     def enviar(self, mensagem):
         """
-        It creates a socket, connects to the server, sends the message and closes the socket
+        Cria um socket, conecta-se ao servidor, envia a mensagem e fecha o socket
         
-        :param mensagem: The message to be sent
+        :param mensagem: A mensagem a ser enviada
         """
         try:
             s = socket(AF_INET, SOCK_STREAM)
@@ -130,11 +130,11 @@ class Usuario():
 
     def escrever(self, mensagem, posicao=0):
         """
-        It inserts a message into a textbox
+        Ele insere uma mensagem em uma caixa de texto
         
-        :param mensagem: The message to be written
-        :param posicao: 0 = append to the end of the textbox, 1 = insert before the last line, defaults
-        to 0 (optional)
+        :param mensagem: A mensagem a ser escrita
+        :param posicao: 0 = anexar ao final da caixa de texto, 1 = inserir antes da última linha, padrão
+        a 0 (opcional)
         """
         
         self.mutexMensagem.acquire()
@@ -194,9 +194,9 @@ class Usuario():
 
         def usuarioA():
             """
-            If the application is not started, ask the user for his name, start the application, start
-            the thread, set the application title, and write a welcome message.
-            If the application is started, show a warning message.
+            Se o aplicativo não for iniciado, pergunte ao usuário seu nome, inicie o aplicativo, inicie
+            o encadeamento, defina o título do aplicativo e escreva uma mensagem de boas-vindas.
+            Se o aplicativo for iniciado, mostre uma mensagem de aviso.
             """
             if self.iniciado == False:
                 self.nomeUsuario = simpledialog.askstring(
@@ -215,8 +215,8 @@ class Usuario():
 
         def usuarioB():
             """
-            If the application is not started, ask the user for his name, start the application, and set
-            the application title.
+            Se o aplicativo não for iniciado, pergunte ao usuário seu nome, inicie o aplicativo e defina
+            o título do aplicativo.
             """
             if self.iniciado == False:
                 self.nomeUsuario = simpledialog.askstring(
@@ -277,7 +277,7 @@ class Usuario():
 # Criando um objeto de usuário
 hostA = "localhost"
 hostB = "localhost"
-portaUsuarioA = 3535
-portaUsuarioB = 5353
+portaUsuarioA = 4000
+portaUsuarioB = 5000
 
 Usuario(hostA, hostB, portaUsuarioA, portaUsuarioB)
