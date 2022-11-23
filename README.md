@@ -1,12 +1,9 @@
-# Avaliação – Camada de Transporte
-Avaliação – Camada de Transporte
-
-Universidade do Vale do Itajaí 
-
-Disciplina: Redes de Computadores I 
-
-Professor: Felipe Viel 
-
-Avaliação – Camada de Transporte 
-
-Alunos Kelvynn Bordin Calegari e João Victor Fiorini De Souza
+# Atividade da diciplina Redes de Computadores I
+```markdown
+Universidade do Vale do Itajaí
+Professor: Felipe Viel
+```
+## O que foi desenvolvido
+```markdown
+Foi desenvolvido um programa estilo MSN, que utiliza Socket para se comunicar com outra instancia através de TCP e uma comunicação P2P dentro de localhost 
+```
