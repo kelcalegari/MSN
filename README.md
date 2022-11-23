@@ -7,5 +7,5 @@ Professor: Felipe Viel
 ```markdown
 Foi desenvolvido um programa estilo MSN,
 que utiliza Socket para se comunicar com outra instancia através de TCP 
-e uma comunicação P2P dentro de localhost 
+e uma comunicação P2P dentro de localhost. 
 ```
